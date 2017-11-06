@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+</head>
+<body>
+
+<h1><%= title %></h1>
+
+<div class="set-nickname">
+    <form id="set-nickname">
+        <h3>请设置昵称进入聊天室 <b>&darr;</b></h3>
+        <input type="text" id="nickname" placeholder="请输入昵称" autocomplete="off" />
+        <p><input type="submit" value="我就叫这个名字" /></p>
+    </form>
+</div>
+
+<div class="chat">
+    <div class="online">
+        <h3>当前在线人数</h3>
+        <div id="nicknames">
+            <ul>
+            </ul>
+        </div>
+    </div>
+    <div class="window">
+        <h3>聊天内容</h3>
+        <div class="message">
+            <ul></ul>
+        </div>
+        <form class="send-form">
+            <input type="text" placeholder="请输入内容" />
+            <input type="submit" value="发送" />
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript" src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript">
+
+    var socket = io.connect();
+    var nickname = $("#nickname");
+    var setNicknameForm = $("#set-nickname");
+    var nacknamesList = $("#nicknames ul");
+    var messageForm = $(".send-form");
+    var message = ($(".send-form input[type='text']"));
+
+    setNicknameForm.submit(function(event){
+        event.preventDefault();
+        socket.emit('nickname', nickname.val(), function(data){
+            if(data){
+                alert('昵称录入成功！');
+                $(".set-nickname").hide();
+                $(".message").prepend('<p>~你好！欢迎进入<span style="color:#1296DB;">老梁聊天室</span>！</p>');
+            }else{
+                setNicknameForm.append('<p style="color:red;font-size:12px;">昵称不能为空或已经被使用，请输入其它昵称！</p>');
+            }
+        });
+    });
+
+    socket.on('nicknames',function(data){
+        var html = '';
+        for(var i=0; i<data.length; i++){
+            html += '<li>' + data[i] + '</li>';
+        }
+        nacknamesList.empty().append(html);
+    });
+
+    messageForm.submit(function(event){
+        event.preventDefault();
+        socket.emit('user message', message.val(), function(data){
+            if(!data){
+                alert('你有本事打几个字看看！');
+            }else{
+                message.val('').focus();
+            }
+        });
+    });
+
+    socket.on('user message',function(data){
+        $(".message ul").append('<li><div><b>'+data.nick+'：</b>'+data.message+'</div></li>');
+    });
+    
+</script>
+
+</body>
+
+</html>
